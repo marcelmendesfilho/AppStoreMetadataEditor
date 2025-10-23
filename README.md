@@ -32,7 +32,7 @@ AppStoreMetadataEditor is a native macOS application designed to streamline the 
 - Character limit validation with real-time feedback
 
 ### 🤖 AI-Powered Translation
-- Integration with **OpenRouter API** (GPT-4o)
+- Integration with **OpenRouter API** (choose your model)
 - **Batch translation** of multiple fields in a single API call
 - **Selective field translation** via checkboxes
 - **Mirror primary** feature for English locale variants (en-US, en-GB, en-CA, en-AU)
@@ -122,7 +122,7 @@ open AppStoreMetadataEditor.xcodeproj
 2. **Translation Service Setup (Optional):**
    - Go to **Translation Service** tab in Settings
    - Enter your OpenRouter API key
-   - Configure base URL and model (defaults to GPT-4o)
+   - Configure base URL and model (choose your model - defaults to GPT-4o)
    - Toggle **Use Mock** for testing without consuming API credits
 
 ## 📖 Usage
@@ -169,7 +169,7 @@ open AppStoreMetadataEditor.xcodeproj
 - **Persistence:** Keychain (credentials), UserDefaults (settings, favorites)
 - **APIs:**
   - App Store Connect API (REST)
-  - OpenRouter API (GPT-4o)
+  - OpenRouter API (choose your model - defaults to GPT-4o)
   - iTunes Search API (icon fetching)
 
 ## 📝 API Endpoints
