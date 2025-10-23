@@ -11,7 +11,7 @@
 
 AppStoreMetadataEditor is a native macOS application designed to streamline the management of App Store Connect metadata for developers. Built with SwiftUI and following MVVM architecture with protocol-based dependency injection, it provides a clean and efficient interface for editing app version localizations across multiple platforms.
 
-![Main View](Documentation/AppStoreMetadataEditor_MainView.png)
+![Main View](Screenshots/AppStoreMetadataEditor_MainView.png)
 
 ## ✨ Features
 
@@ -50,7 +50,7 @@ AppStoreMetadataEditor is a native macOS application designed to streamline the 
 - **Progress tracking** during batch operations (e.g., "Updating 3/10 localizations")
 - Individual error handling per locale with detailed reporting
 
-![Edit View](Documentation/AppStoreMetadataEditor_EditView.png)
+![Edit View](Screenshots/AppStoreMetadataEditor_EditView.png)
 
 ## 🏗️ Architecture
 
