@@ -139,13 +139,19 @@ open AppStoreMetadataEditor.xcodeproj
 
 1. **Select an App:** Click on any app in the list
 2. **Choose Platform:** Use the segmented picker to filter by platform (iOS/macOS/visionOS)
-3. **Edit Version:** Click on a version with status **"Prepare for Submission"**
-4. **Update Fields:** Edit any of the 6 metadata fields across all localizations
-5. **Translate:**
+3. **Create New Version in App Store Connect:**
+   - Access [App Store Connect](https://appstoreconnect.apple.com)
+   - Navigate to your app and create a new version
+   - Add all desired localizations/languages for the new version
+   - Ensure the version status is set to **"Prepare for Submission"**
+4. **Return to AppStoreMetadataEditor:** Refresh the app list to see the new version
+5. **Edit Version:** Click on the version with status **"Prepare for Submission"**
+6. **Update Fields:** Edit any of the 6 metadata fields across all localizations
+7. **Translate:**
    - Select which fields to translate using checkboxes (base locale only)
    - Click individual **"Translate"** buttons per locale for selective translation
    - Use **"Mirror primary"** for English variants
-6. **Save:** Click **"Update Version"** to save all changes
+8. **Save:** Click **"Update Version"** to save all changes
 
 ### Translation Features
 
