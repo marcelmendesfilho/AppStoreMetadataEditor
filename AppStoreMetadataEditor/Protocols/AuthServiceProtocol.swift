@@ -7,10 +7,11 @@
 
 import Foundation
 
-protocol AuthServiceProtocol {
-    var isAuthenticated: Bool { get }
-    var authToken: String? { get }
+protocol AuthServiceProtocol: Actor {
+    var isAuthenticated: Bool { get async }
+    var authToken: String? { get async }
 
     func authenticate(issuerID: String, keyID: String, privateKey: String) async throws
-    func clearAuthentication()
+    func regenerateToken() async throws
+    func clearAuthentication() async
 }

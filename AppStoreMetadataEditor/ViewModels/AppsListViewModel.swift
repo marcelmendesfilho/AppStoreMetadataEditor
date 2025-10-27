@@ -80,7 +80,7 @@ class AppsListViewModel: ObservableObject {
 
     func loadApps() async {
         // Verifica se está autenticado antes de tentar carregar
-        guard authService.isAuthenticated else {
+        guard await authService.isAuthenticated else {
             showAuthSheet = true
             return
         }

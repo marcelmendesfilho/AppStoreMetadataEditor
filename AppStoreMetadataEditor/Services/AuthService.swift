@@ -9,9 +9,11 @@ import Foundation
 import Combine
 import CryptoKit
 
-class AuthService: AuthServiceProtocol {
-    @Published private(set) var isAuthenticated = false
+actor AuthService: AuthServiceProtocol {
+    private(set) var isAuthenticated = false
     private(set) var authToken: String?
+    private var tokenExpirationDate: Date?
+    private var tokenTask: Task<String, Error>?
 
     private var issuerID: String?
     private var keyID: String?
@@ -36,9 +38,38 @@ class AuthService: AuthServiceProtocol {
         }
     }
 
+    func regenerateToken() async throws {
+        // Se já há regeneração em andamento, aguarda o resultado
+        if let existingTask = tokenTask {
+            _ = try await existingTask.value
+            return
+        }
+
+        // Cria nova task de regeneração para evitar race condition
+        let task = Task<String, Error> {
+            try self.generateJWT()
+        }
+        tokenTask = task
+
+        do {
+            let newToken = try await task.value
+            self.authToken = newToken
+            self.isAuthenticated = true
+            self.tokenTask = nil
+
+            print("🔄 [AuthService] Token regenerated successfully")
+        } catch {
+            self.tokenTask = nil
+            print("❌ [AuthService] Failed to regenerate token: \(error)")
+            throw error
+        }
+    }
+
     func clearAuthentication() {
         authToken = nil
         isAuthenticated = false
+        tokenExpirationDate = nil
+        tokenTask = nil
         issuerID = nil
         keyID = nil
         privateKey = nil
@@ -53,7 +84,10 @@ class AuthService: AuthServiceProtocol {
 
         let header = JWTHeader(alg: "ES256", kid: keyID, typ: "JWT")
         let now = Date()
-        let expiration = now.addingTimeInterval(20 * 60) // 20 minutos
+        let expiration = now.addingTimeInterval(15 * 60) // 15 minutos (recomendação Apple)
+
+        // Salva data de expiração para verificações futuras
+        self.tokenExpirationDate = expiration
 
         let payload = JWTPayload(
             iss: issuerID,
