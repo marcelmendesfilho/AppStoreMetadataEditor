@@ -26,10 +26,26 @@ class AppDetailViewModel: ObservableObject {
         self.versions = app.versions
         self.selectedPlatform = app.platforms.first
 
-        // Carrega localizações para todas as versões
+        // Carrega versões atualizadas e localizações
         Task {
-            await loadAllLocalizations()
+            await refreshVersions()
         }
+    }
+
+    func refreshVersions() async {
+        isLoading = true
+        do {
+            // Busca versões atualizadas do serviço
+            let fetchedVersions = try await appStoreService.fetchVersions(for: app.id)
+            self.versions = fetchedVersions
+
+            // Carrega localizações para todas as versões
+            await loadAllLocalizations()
+        } catch {
+            errorMessage = error.localizedDescription
+            // Em caso de erro, mantém versões antigas
+        }
+        isLoading = false
     }
 
     func loadAllLocalizations() async {

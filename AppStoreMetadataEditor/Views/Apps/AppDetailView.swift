@@ -72,6 +72,23 @@ struct AppDetailView: View {
                         }
                     }
             }
+            .overlay {
+                if viewModel.isLoading {
+                    ProgressView()
+                }
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    Task {
+                        await viewModel.refreshVersions()
+                    }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .disabled(viewModel.isLoading)
+            }
         }
         .sheet(item: $versionToEdit) { data in
             VersionEditorSheet(
