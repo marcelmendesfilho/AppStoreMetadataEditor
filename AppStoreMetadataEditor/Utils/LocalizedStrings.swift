@@ -60,7 +60,7 @@ struct LocalizedStrings {
     static let confirmation = NSLocalizedString("version.confirmation", value: "Confirmation", comment: "Confirmation dialog title")
     static let confirmCloseMessage = NSLocalizedString("version.confirm_close", value: "All changes will be lost. Do you really want to close?", comment: "Confirm close message")
     static let operationCompletedSuccess = NSLocalizedString("version.operation_completed", value: "Operation completed successfully!", comment: "Operation completed message")
-    static let unsavedLocalizationChanges = NSLocalizedString("version.unsaved_localization_changes", value: "Há alterações pendentes nas localizações. Clique em Update Version para salvar.", comment: "Unsaved localization changes warning")
+    static let unsavedLocalizationChanges = NSLocalizedString("version.unsaved_localization_changes", value: "Pending changes", comment: "Unsaved localization changes warning")
 
     // MARK: - App Store States
     static let statePrepareForSubmission = NSLocalizedString("state.prepare_for_submission", value: "Prepare for Submission", comment: "Prepare for submission state")
