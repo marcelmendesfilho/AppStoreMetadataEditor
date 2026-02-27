@@ -27,7 +27,6 @@ class VersionEditorViewModel: ObservableObject {
     @Published var successMessage: String?
     @Published var showErrorAlert = false
     @Published var showSuccessAlert = false
-    @Published var versionCreatedSuccessfully = false // Flag para fechar o sheet após criar versão
     @Published var baseLocale: String = "en-US" // Idioma base definido pela API
     @Published var updateProgress: String? // Progresso da atualização (ex: "Atualizando 3/10...")
     @Published var hasPendingLocalizationChanges = false
@@ -305,7 +304,6 @@ class VersionEditorViewModel: ObservableObject {
             markLocalesAsSynced(successfulLocales)
 
             showSuccessAlert = true
-            versionCreatedSuccessfully = true // Marca para fechar o sheet
 
         } catch {
             errorMessage = String(format: LocalizedStrings.errorUpdatingVersion, error.localizedDescription)

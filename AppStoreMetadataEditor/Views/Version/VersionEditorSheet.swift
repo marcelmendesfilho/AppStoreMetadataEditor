@@ -89,7 +89,11 @@ struct VersionEditorSheet: View {
             Spacer()
 
             Button(LocalizedStrings.close) {
-                showCloseConfirmation = true
+                if viewModel.hasPendingLocalizationChanges {
+                    showCloseConfirmation = true
+                } else {
+                    isPresented = false
+                }
             }
             .keyboardShortcut(.cancelAction)
         }
@@ -309,21 +313,8 @@ struct VersionEditorSheet: View {
         } message: {
             Text(LocalizedStrings.confirmCloseMessage)
         }
-        .onChange(of: viewModel.versionCreatedSuccessfully) { oldValue, newValue in
-            if newValue {
-                // Aguardar um pouco antes de fechar automaticamente após criar versão
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    isPresented = false
-                }
-            }
-        }
         .alert(LocalizedStrings.success, isPresented: $viewModel.showSuccessAlert) {
-            Button(LocalizedStrings.ok) {
-                // Só fecha se foi criação de versão, não tradução
-                if viewModel.versionCreatedSuccessfully {
-                    isPresented = false
-                }
-            }
+            Button(LocalizedStrings.ok) { }
         } message: {
             Text(viewModel.successMessage ?? LocalizedStrings.operationCompletedSuccess)
         }
