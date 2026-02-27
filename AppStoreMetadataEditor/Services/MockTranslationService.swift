@@ -28,7 +28,12 @@ class MockTranslationService: TranslationServiceProtocol {
         return result
     }
 
-    func translateFields(fields: [String: String], from sourceLocale: String, to targetLocale: String) async throws -> [String: String] {
+    func translateFields(
+        fields: [String: String],
+        fieldCharacterLimits: [String: Int],
+        from sourceLocale: String,
+        to targetLocale: String
+    ) async throws -> [String: String] {
         // Simular um pequeno delay para parecer realista
         try await Task.sleep(nanoseconds: 500_000_000) // 0.5 segundos
 
@@ -37,10 +42,19 @@ class MockTranslationService: TranslationServiceProtocol {
         // Para cada campo solicitado, retornar o valor do mock se existir
         for (key, _) in fields {
             if let mockValue = mockPayload[key] {
-                result[key] = mockValue
+                if let limit = fieldCharacterLimits[key] {
+                    result[key] = String(mockValue.prefix(limit))
+                } else {
+                    result[key] = mockValue
+                }
             } else {
                 // Se não houver mock para este campo, retornar uma mensagem genérica
-                result[key] = "Mock translation of \(key) from \(sourceLocale) to \(targetLocale)"
+                let mockText = "Mock translation of \(key) from \(sourceLocale) to \(targetLocale)"
+                if let limit = fieldCharacterLimits[key] {
+                    result[key] = String(mockText.prefix(limit))
+                } else {
+                    result[key] = mockText
+                }
             }
         }
 

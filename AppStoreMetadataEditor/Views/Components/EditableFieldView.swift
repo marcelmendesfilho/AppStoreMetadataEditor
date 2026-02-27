@@ -16,10 +16,10 @@ enum FieldCharacterLimit {
 
     var maxLength: Int? {
         switch self {
-        case .promotionalText: return 170
-        case .description: return 4000
-        case .keywords: return 100
-        case .whatsNew: return 4000
+        case .promotionalText: return LocalizationFieldKey.promotionalText.maxLength
+        case .description: return LocalizationFieldKey.description.maxLength
+        case .keywords: return LocalizationFieldKey.keywords.maxLength
+        case .whatsNew: return LocalizationFieldKey.whatsNew.maxLength
         case .none: return nil
         }
     }
@@ -58,6 +58,24 @@ struct EditableFieldView: View {
         return .secondary
     }
 
+    private var limitedContentBinding: Binding<String> {
+        Binding(
+            get: { content },
+            set: { newValue in
+                guard let maxLength = characterLimit.maxLength else {
+                    content = newValue
+                    return
+                }
+
+                if newValue.count <= maxLength {
+                    content = newValue
+                } else {
+                    content = String(newValue.prefix(maxLength))
+                }
+            }
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Label com estilo destacado e checkbox
@@ -83,16 +101,7 @@ struct EditableFieldView: View {
 
             // Campo editável
             if let height = height {
-                TextEditor(text: Binding(
-                    get: { content },
-                    set: { newValue in
-                        if let maxLength = characterLimit.maxLength {
-                            content = String(newValue.prefix(maxLength))
-                        } else {
-                            content = newValue
-                        }
-                    }
-                ))
+                TextEditor(text: limitedContentBinding)
                     .font(.system(size: 13))
                     .frame(height: height)
                     .padding(8)
@@ -103,16 +112,7 @@ struct EditableFieldView: View {
                             .stroke(isOverLimit ? Color.red : Color.blue.opacity(0.3), lineWidth: 1)
                     )
             } else {
-                TextField("", text: Binding(
-                    get: { content },
-                    set: { newValue in
-                        if let maxLength = characterLimit.maxLength {
-                            content = String(newValue.prefix(maxLength))
-                        } else {
-                            content = newValue
-                        }
-                    }
-                ))
+                TextField("", text: limitedContentBinding)
                     .font(.system(size: 13))
                     .textFieldStyle(.plain)
                     .padding(8)

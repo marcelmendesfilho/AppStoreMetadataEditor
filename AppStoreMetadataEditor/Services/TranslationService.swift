@@ -121,16 +121,41 @@ class TranslationService: TranslationServiceProtocol {
         return translations
     }
 
-    func translateFields(fields: [String: String], from sourceLocale: String, to targetLocale: String) async throws -> [String: String] {
+    func translateFields(
+        fields: [String: String],
+        fieldCharacterLimits: [String: Int],
+        from sourceLocale: String,
+        to targetLocale: String
+    ) async throws -> [String: String] {
         // Criar um prompt que traduz múltiplos campos de uma vez
         var fieldsText = ""
         for (key, value) in fields {
             fieldsText += "[\(key)]: \(value)\n\n"
         }
 
+        let limitsText: String
+        if fieldCharacterLimits.isEmpty {
+            limitsText = "- No character limits provided."
+        } else {
+            limitsText = fieldCharacterLimits
+                .keys
+                .sorted()
+                .compactMap { key in
+                    guard let limit = fieldCharacterLimits[key] else { return nil }
+                    return "- \(key): max \(limit) characters"
+                }
+                .joined(separator: "\n")
+        }
+
         let prompt = """
         Translate the following fields from \(sourceLocale) to \(targetLocale).
         Return a JSON object where keys are the field names and values are the translations.
+        Respect the maximum length of each field.
+        If needed, rewrite using shorter words while preserving meaning and natural language.
+        Never exceed the max length of each field.
+
+        Character limits:
+        \(limitsText)
 
         Fields to translate:
         \(fieldsText)
@@ -159,6 +184,9 @@ class TranslationService: TranslationServiceProtocol {
         print("Model: \(model)")
         print("Source: \(sourceLocale) → Target: \(targetLocale)")
         print("Fields: \(fields.keys.joined(separator: ", "))")
+        if !fieldCharacterLimits.isEmpty {
+            print("Field limits: \(fieldCharacterLimits)")
+        }
         if let bodyString = String(data: urlRequest.httpBody ?? Data(), encoding: .utf8) {
             print("Request Body: \(bodyString)")
         }
@@ -215,9 +243,22 @@ class TranslationService: TranslationServiceProtocol {
             throw NetworkError.decodingError
         }
 
-        print("✅ [OpenRouter] Translations parsed successfully: \(translations.keys.joined(separator: ", "))")
+        let translationsWithSafeLimits = applyCharacterLimits(to: translations, limits: fieldCharacterLimits)
+        print("✅ [OpenRouter] Translations parsed successfully: \(translationsWithSafeLimits.keys.joined(separator: ", "))")
 
-        return translations
+        return translationsWithSafeLimits
+    }
+
+    private func applyCharacterLimits(to translations: [String: String], limits: [String: Int]) -> [String: String] {
+        guard !limits.isEmpty else { return translations }
+
+        var adjustedTranslations = translations
+        for (field, value) in translations {
+            guard let maxLength = limits[field], value.count > maxLength else { continue }
+            adjustedTranslations[field] = String(value.prefix(maxLength))
+            print("⚠️ [OpenRouter] Field '\(field)' exceeded \(maxLength) chars and was truncated.")
+        }
+        return adjustedTranslations
     }
 }
 

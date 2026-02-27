@@ -15,7 +15,11 @@ enum VersionEditorMode: Equatable {
 @MainActor
 class VersionEditorViewModel: ObservableObject {
     @Published var versionString = ""
-    @Published var localizations: [String: EditableLocalization] = [:]
+    @Published var localizations: [String: EditableLocalization] = [:] {
+        didSet {
+            refreshPendingLocalizationChanges()
+        }
+    }
     @Published var isLoadingData = false
     @Published var isCreatingVersion = false
     @Published var isTranslating = false
@@ -26,6 +30,7 @@ class VersionEditorViewModel: ObservableObject {
     @Published var versionCreatedSuccessfully = false // Flag para fechar o sheet após criar versão
     @Published var baseLocale: String = "en-US" // Idioma base definido pela API
     @Published var updateProgress: String? // Progresso da atualização (ex: "Atualizando 3/10...")
+    @Published var hasPendingLocalizationChanges = false
 
     let mode: VersionEditorMode
 
@@ -63,6 +68,7 @@ class VersionEditorViewModel: ObservableObject {
     private let translationService: TranslationServiceProtocol
     private let app: AppDisplayData
     private let platform: Platform
+    private var syncedLocalizations: [String: EditableLocalization] = [:]
 
     var sortedLocales: [String] {
         localizations.keys.sorted { locale1, locale2 in
@@ -104,11 +110,13 @@ class VersionEditorViewModel: ObservableObject {
                 try await self.appStoreService.fetchLocalizations(for: versionID)
             }
 
-            localizations = locs.reduce(into: [:]) { result, loc in
+            let loadedLocalizations = locs.reduce(into: [String: EditableLocalization]()) { result, loc in
                 var editable = EditableLocalization(from: loc.attributes)
                 editable.id = loc.id // Guardar o ID da localização para update
                 result[loc.attributes.locale] = editable
             }
+            syncedLocalizations = loadedLocalizations
+            localizations = loadedLocalizations
 
             // Usar primaryLocale do app como idioma base
             if let primaryLocale = app.primaryLocale {
@@ -121,6 +129,8 @@ class VersionEditorViewModel: ObservableObject {
                     print("⚠️ [VersionEditorViewModel] App has no primaryLocale, using first localization: \(firstLocale)")
                 }
             }
+
+            refreshPendingLocalizationChanges()
 
         } catch is TimeoutError {
             errorMessage = LocalizedStrings.timeoutMessage
@@ -195,8 +205,15 @@ class VersionEditorViewModel: ObservableObject {
             }
 
             // Traduzir todos os campos de uma vez
+            let fieldCharacterLimits = fieldsToTranslate.reduce(into: [String: Int]()) { result, entry in
+                if let maxLength = LocalizationFieldLimits.maxLength(for: entry.key) {
+                    result[entry.key] = maxLength
+                }
+            }
+
             let translatedFields = try await translationService.translateFields(
                 fields: fieldsToTranslate,
+                fieldCharacterLimits: fieldCharacterLimits,
                 from: baseLocale,
                 to: targetLocale
             )
@@ -238,6 +255,7 @@ class VersionEditorViewModel: ObservableObject {
             var currentCount = 0
             var successCount = 0
             var failedLocales: [String] = []
+            var successfulLocales: [String] = []
 
             print("🔄 [VersionEditorViewModel] Starting batch update of \(totalCount) localizations")
 
@@ -265,6 +283,7 @@ class VersionEditorViewModel: ObservableObject {
                     )
 
                     successCount += 1
+                    successfulLocales.append(locale)
                     print("✅ [VersionEditorViewModel] Updated \(locale) successfully (\(successCount)/\(totalCount))")
 
                 } catch {
@@ -283,6 +302,8 @@ class VersionEditorViewModel: ObservableObject {
                 print("⚠️ [VersionEditorViewModel] Partial success: \(successCount)/\(totalCount) - Failed: \(failedLocales)")
             }
 
+            markLocalesAsSynced(successfulLocales)
+
             showSuccessAlert = true
             versionCreatedSuccessfully = true // Marca para fechar o sheet
 
@@ -294,6 +315,39 @@ class VersionEditorViewModel: ObservableObject {
 
         updateProgress = nil
         isCreatingVersion = false
+    }
+
+    private func refreshPendingLocalizationChanges() {
+        let allLocales = Set(localizations.keys).union(syncedLocalizations.keys)
+        hasPendingLocalizationChanges = allLocales.contains { locale in
+            guard let current = localizations[locale], let synced = syncedLocalizations[locale] else {
+                return true
+            }
+            return !isEquivalent(current, synced)
+        }
+    }
+
+    private func markLocalesAsSynced(_ locales: [String]) {
+        guard !locales.isEmpty else { return }
+
+        for locale in locales {
+            syncedLocalizations[locale] = localizations[locale]
+        }
+        refreshPendingLocalizationChanges()
+    }
+
+    private func isEquivalent(_ lhs: EditableLocalization, _ rhs: EditableLocalization) -> Bool {
+        normalize(lhs.promotionalText) == normalize(rhs.promotionalText) &&
+        normalize(lhs.description) == normalize(rhs.description) &&
+        normalize(lhs.whatsNew) == normalize(rhs.whatsNew) &&
+        normalize(lhs.keywords) == normalize(rhs.keywords) &&
+        normalize(lhs.supportUrl) == normalize(rhs.supportUrl) &&
+        normalize(lhs.marketingUrl) == normalize(rhs.marketingUrl)
+    }
+
+    private func normalize(_ value: String?) -> String? {
+        guard let value else { return nil }
+        return value.isEmpty ? nil : value
     }
 }
 

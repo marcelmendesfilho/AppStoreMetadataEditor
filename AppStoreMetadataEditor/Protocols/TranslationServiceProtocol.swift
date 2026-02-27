@@ -16,6 +16,7 @@ protocol TranslationServiceProtocol {
 
     func translateFields(
         fields: [String: String],
+        fieldCharacterLimits: [String: Int],
         from sourceLocale: String,
         to targetLocale: String
     ) async throws -> [String: String]

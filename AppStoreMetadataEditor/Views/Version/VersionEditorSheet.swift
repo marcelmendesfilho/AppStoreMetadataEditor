@@ -197,11 +197,11 @@ struct VersionEditorSheet: View {
 
                     // Editor da localização selecionada
                     if let selectedLocale = selectedLocale,
-                       let localization = viewModel.localizations[selectedLocale] {
+                       viewModel.localizations[selectedLocale] != nil {
                         LocalizationEditorView(
                             locale: selectedLocale,
                             localization: Binding(
-                                get: { localization },
+                                get: { viewModel.localizations[selectedLocale]! },
                                 set: { viewModel.localizations[selectedLocale] = $0 }
                             ),
                             viewModel: viewModel
@@ -231,6 +231,14 @@ struct VersionEditorSheet: View {
                 Text(errorMessage)
                     .foregroundColor(.red)
                     .font(.caption)
+            } else if viewModel.hasPendingLocalizationChanges {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text(LocalizedStrings.unsavedLocalizationChanges)
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
             }
 
             Spacer()
